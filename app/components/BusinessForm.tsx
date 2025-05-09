@@ -274,7 +274,7 @@ export default function BusinessForm({
               { value: "hostel", label: "Hostel" },
               { value: "hotel", label: "Hotel" },
               { value: "private_rooms", label: "Private Rooms" },
-              { value: "villa", label: "Villa" },
+              { value: "other", label: "Other" },
               { value: "camping", label: "Camping" },
             ].map(({ value, label }) => (
               <div key={value} className="flex items-center">
