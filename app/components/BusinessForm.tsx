@@ -7,20 +7,31 @@ interface BusinessFormProps {
     id: string;
     name: string;
     description: string;
-    type: string;
+    type: string[];
     phone: string;
-    email: string;
-    website: string;
     latitude: number;
     longitude: number;
-    operating_hours: any;
+    hours: any;
     has_delivery: boolean;
     has_free_wifi: boolean;
     image: string;
+    instagram: string;
+    facebook: string;
+    menu: any;
   };
   onSuccess: () => void;
   onCancel: () => void;
 }
+
+const defaultHours = {
+  monday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  tuesday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  wednesday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  thursday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  friday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  saturday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
+  sunday: { open: false, hours: [] },
+};
 
 export default function BusinessForm({
   business,
@@ -34,15 +45,16 @@ export default function BusinessForm({
   const [formData, setFormData] = useState({
     name: business?.name || "",
     description: business?.description || "",
-    type: business?.type || "",
+    type: business?.type || [],
     phone: business?.phone || "",
-    email: business?.email || "",
-    website: business?.website || "",
     latitude: business?.latitude || "",
     longitude: business?.longitude || "",
-    operating_hours: business?.operating_hours || {},
+    hours: business?.hours || defaultHours,
     has_delivery: business?.has_delivery || false,
     has_free_wifi: business?.has_free_wifi || false,
+    instagram: business?.instagram || "",
+    facebook: business?.facebook || "",
+    menu: business?.menu || { items: [] },
   });
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +66,102 @@ export default function BusinessForm({
       setImagePreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleHoursChange = (day: string, field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const handleTimeSlotChange = (
+    day: string,
+    index: number,
+    field: string,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          hours: prev.hours[day].hours.map((slot: any, i: number) =>
+            i === index ? { ...slot, [field]: value } : slot
+          ),
+        },
+      },
+    }));
+  };
+
+  const addTimeSlot = (day: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          hours: [...prev.hours[day].hours, { open: "09:00", close: "17:00" }],
+        },
+      },
+    }));
+  };
+
+  const removeTimeSlot = (day: string, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      hours: {
+        ...prev.hours,
+        [day]: {
+          ...prev.hours[day],
+          hours: prev.hours[day].hours.filter(
+            (_: any, i: number) => i !== index
+          ),
+        },
+      },
+    }));
+  };
+
+  const handleMenuChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const items = e.target.value
+      .split("\n")
+      .map((item) => ({
+        name: item.trim(),
+      }))
+      .filter((item) => item.name);
+
+    setFormData((prev) => ({
+      ...prev,
+      menu: { items },
+    }));
+  };
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      const newValue = value.substring(0, start) + "\n" + value.substring(end);
+
+      // Update the textarea value
+      textarea.value = newValue;
+
+      // Set cursor position after the new line
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
+
+      // Trigger the change event
+      const event = new Event("input", { bubbles: true });
+      textarea.dispatchEvent(event);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,49 +263,68 @@ export default function BusinessForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Type
-            </label>
-            <select
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="">Select a type</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="hotel">Hotel</option>
-            </select>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Business Type
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {[
+              { value: "restaurant", label: "Restaurant" },
+              { value: "cafe", label: "Café" },
+              { value: "hostel", label: "Hostel" },
+              { value: "hotel", label: "Hotel" },
+              { value: "private_rooms", label: "Private Rooms" },
+              { value: "villa", label: "Villa" },
+              { value: "camping", label: "Camping" },
+            ].map(({ value, label }) => (
+              <div key={value} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`type-${value}`}
+                  checked={formData.type.includes(value)}
+                  onChange={(e) => {
+                    const newTypes = e.target.checked
+                      ? [...formData.type, value]
+                      : formData.type.filter((t: string) => t !== value);
+                    setFormData({ ...formData, type: newTypes });
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <label
+                  htmlFor={`type-${value}`}
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  {label}
+                </label>
+              </div>
+            ))}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Phone
+          </label>
+          <input
+            type="tel"
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              Instagram
             </label>
             <input
-              type="email"
-              value={formData.email}
+              type="text"
+              value={formData.instagram}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, instagram: e.target.value })
               }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -205,13 +332,13 @@ export default function BusinessForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Website
+              Facebook
             </label>
             <input
-              type="url"
-              value={formData.website}
+              type="text"
+              value={formData.facebook}
               onChange={(e) =>
-                setFormData({ ...formData, website: e.target.value })
+                setFormData({ ...formData, facebook: e.target.value })
               }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
@@ -254,6 +381,102 @@ export default function BusinessForm({
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Operating Hours
+          </label>
+          <div className="space-y-4">
+            {Object.entries(formData.hours).map(
+              ([day, data]: [string, any]) => (
+                <div key={day} className="border p-4 rounded-md">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700 capitalize">
+                      {day}
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={data.open}
+                        onChange={(e) =>
+                          handleHoursChange(day, "open", e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-600">Open</span>
+                    </div>
+                  </div>
+                  {data.open && (
+                    <div className="space-y-2">
+                      {data.hours.map((slot: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-2"
+                        >
+                          <input
+                            type="time"
+                            value={slot.open}
+                            onChange={(e) =>
+                              handleTimeSlotChange(
+                                day,
+                                index,
+                                "open",
+                                e.target.value
+                              )
+                            }
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                          <span>to</span>
+                          <input
+                            type="time"
+                            value={slot.close}
+                            onChange={(e) =>
+                              handleTimeSlotChange(
+                                day,
+                                index,
+                                "close",
+                                e.target.value
+                              )
+                            }
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeTimeSlot(day, index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addTimeSlot(day)}
+                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                      >
+                        + Add Time Slot
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Menu Items (one per line)
+          </label>
+          <textarea
+            value={formData.menu.items.map((item: any) => item.name).join("\n")}
+            onChange={handleMenuChange}
+            onKeyDown={handleMenuKeyDown}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            rows={5}
+            placeholder="Enter menu items, one per line"
+          />
         </div>
 
         <div className="flex items-center space-x-4">

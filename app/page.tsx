@@ -9,16 +9,17 @@ interface Business {
   id: string;
   name: string;
   description: string;
-  type: string;
+  type: string[];
   phone: string;
-  email: string;
-  website: string;
   latitude: number;
   longitude: number;
-  operating_hours: any;
+  hours: any;
   has_delivery: boolean;
   has_free_wifi: boolean;
   image: string;
+  instagram: string;
+  facebook: string;
+  menu: any;
 }
 
 export default function Home() {
