@@ -18,6 +18,7 @@ interface BusinessFormProps {
     instagram: string;
     facebook: string;
     menu: any;
+    popularity?: number;
   };
   onSuccess: () => void;
   onCancel: () => void;
@@ -55,7 +56,18 @@ export default function BusinessForm({
     instagram: business?.instagram || "",
     facebook: business?.facebook || "",
     menu: business?.menu || { items: [] },
+    popularity: business?.popularity || 5,
   });
+
+  const shouldShowHours = () => {
+    return formData.type.some((type) =>
+      ["restaurant", "cafe", "other"].includes(type)
+    );
+  };
+
+  const shouldShowMenu = () => {
+    return formData.type.some((type) => ["restaurant", "cafe"].includes(type));
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,6 +187,8 @@ export default function BusinessForm({
       const businessData = {
         ...formData,
         image: imageUrl,
+        hours: shouldShowHours() ? formData.hours : null,
+        menu: shouldShowMenu() ? formData.menu : null,
       };
 
       let businessId;
@@ -384,100 +398,131 @@ export default function BusinessForm({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Operating Hours
+          <label className="block text-sm font-medium text-gray-700">
+            Popularity
           </label>
-          <div className="space-y-4">
-            {Object.entries(formData.hours).map(
-              ([day, data]: [string, any]) => (
-                <div key={day} className="border p-4 rounded-md">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                      {day}
-                    </label>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={data.open}
-                        onChange={(e) =>
-                          handleHoursChange(day, "open", e.target.checked)
-                        }
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-600">Open</span>
-                    </div>
-                  </div>
-                  {data.open && (
-                    <div className="space-y-2">
-                      {data.hours.map((slot: any, index: number) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2"
-                        >
-                          <input
-                            type="time"
-                            value={slot.open}
-                            onChange={(e) =>
-                              handleTimeSlotChange(
-                                day,
-                                index,
-                                "open",
-                                e.target.value
-                              )
-                            }
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          />
-                          <span>to</span>
-                          <input
-                            type="time"
-                            value={slot.close}
-                            onChange={(e) =>
-                              handleTimeSlotChange(
-                                day,
-                                index,
-                                "close",
-                                e.target.value
-                              )
-                            }
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeTimeSlot(day, index)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => addTimeSlot(day)}
-                        className="text-sm text-indigo-600 hover:text-indigo-800"
-                      >
-                        + Add Time Slot
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )
-            )}
+          <div className="flex items-center space-x-2">
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="1"
+              value={formData.popularity}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  popularity: parseInt(e.target.value),
+                })
+              }
+              className="block w-full"
+            />
+            <span className="text-sm font-medium">
+              {formData.popularity}/10
+            </span>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Menu Items (one per line)
-          </label>
-          <textarea
-            value={formData.menu.items.map((item: any) => item.name).join("\n")}
-            onChange={handleMenuChange}
-            onKeyDown={handleMenuKeyDown}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            rows={5}
-            placeholder="Enter menu items, one per line"
-          />
-        </div>
+        {shouldShowHours() && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Operating Hours
+            </label>
+            <div className="space-y-4">
+              {Object.entries(formData.hours).map(
+                ([day, data]: [string, any]) => (
+                  <div key={day} className="border p-4 rounded-md">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700 capitalize">
+                        {day}
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={data.open}
+                          onChange={(e) =>
+                            handleHoursChange(day, "open", e.target.checked)
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-600">Open</span>
+                      </div>
+                    </div>
+                    {data.open && (
+                      <div className="space-y-2">
+                        {data.hours.map((slot: any, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="time"
+                              value={slot.open}
+                              onChange={(e) =>
+                                handleTimeSlotChange(
+                                  day,
+                                  index,
+                                  "open",
+                                  e.target.value
+                                )
+                              }
+                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+                            <span>to</span>
+                            <input
+                              type="time"
+                              value={slot.close}
+                              onChange={(e) =>
+                                handleTimeSlotChange(
+                                  day,
+                                  index,
+                                  "close",
+                                  e.target.value
+                                )
+                              }
+                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeTimeSlot(day, index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addTimeSlot(day)}
+                          className="text-sm text-indigo-600 hover:text-indigo-800"
+                        >
+                          + Add Time Slot
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {shouldShowMenu() && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Menu Items (one per line)
+            </label>
+            <textarea
+              value={formData.menu.items
+                .map((item: any) => item.name)
+                .join("\n")}
+              onChange={handleMenuChange}
+              onKeyDown={handleMenuKeyDown}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              rows={5}
+              placeholder="Enter menu items, one per line"
+            />
+          </div>
+        )}
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
