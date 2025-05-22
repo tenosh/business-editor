@@ -31,7 +31,7 @@ const defaultHours = {
   thursday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
   friday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
   saturday: { open: true, hours: [{ open: "09:00", close: "17:00" }] },
-  sunday: { open: false, hours: [] },
+  sunday: { open: false, hours: null },
 };
 
 export default function BusinessForm({
@@ -81,16 +81,45 @@ export default function BusinessForm({
   };
 
   const handleHoursChange = (day: string, field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      hours: {
-        ...prev.hours,
-        [day]: {
-          ...prev.hours[day],
-          [field]: value,
+    setFormData((prev) => {
+      // If we're toggling the 'open' field to false, set hours to null
+      if (field === 'open' && value === false) {
+        return {
+          ...prev,
+          hours: {
+            ...prev.hours,
+            [day]: {
+              open: false,
+              hours: null
+            },
+          },
+        };
+      }
+      // If we're toggling the 'open' field to true, initialize with default hours if needed
+      if (field === 'open' && value === true) {
+        return {
+          ...prev,
+          hours: {
+            ...prev.hours,
+            [day]: {
+              open: true,
+              hours: prev.hours[day]?.hours || [{ open: '09:00', close: '17:00' }],
+            },
+          },
+        };
+      }
+      // For any other field changes
+      return {
+        ...prev,
+        hours: {
+          ...prev.hours,
+          [day]: {
+            ...prev.hours[day],
+            [field]: value,
+          },
         },
-      },
-    }));
+      };
+    });
   };
 
   const handleTimeSlotChange = (
