@@ -319,6 +319,18 @@ export default function BusinessForm({
               { value: "private_rooms", label: "Private Rooms" },
               { value: "other", label: "Other" },
               { value: "camping", label: "Camping" },
+              { value: "cerveza", label: "Cerveza" },
+              { value: "mezcal", label: "Mezcal" },
+              { value: "vino", label: "Vino" },
+              { value: "licor", label: "Licor" },
+              { value: "gasolina", label: "Gasolina" },
+              { value: "mecanico", label: "Mecánico" },
+              { value: "carniceria", label: "Carnicería" },
+              { value: "mercado", label: "Mercado" },
+              { value: "abarrotes", label: "Abarrotes" },
+              { value: "farmacias", label: "Farmacias" },
+              { value: "gym", label: "Gym" },
+              { value: "helados", label: "Helados" },
             ].map(({ value, label }) => (
               <div key={value} className="flex items-center">
                 <input
